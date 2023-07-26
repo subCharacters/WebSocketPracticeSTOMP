@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Boot WebSocket Chat Application</title>
+    <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body onload="connect()">
+<script th:inline="javascript">
+    var stompClient = null;
+    var roomId = "room1";
+    
+    function connect() {
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, onConnected, onError);
+        //onConnected - connect 콜백 함수
+        //onError - error 콜백 함수
+    }
+
+    function onConnected() {
+        // Subscribe to the Public Topic
+        stompClient.subscribe("/topic/" + roomId, onMessageReceived);
+        //명명된 목적지"/topic/public"을 구독
+        stompClient.send("/chat/joinRoom/" + roomId,
+            {},
+            JSON.stringify({sender: [[${username}]], roomId: roomId, type: 'JOIN'})
+        )
+    }
+
+    function onError(error) {
+        connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
+        connectingElement.style.color = 'red';
+    }
+
+    function onMessageReceived(payload) {
+        var message = JSON.parse(payload.body);
+
+        var messageElement = document.createElement('li');
+
+        if(message.type === 'JOIN') {
+            messageElement.classList.add('event-message');
+            message.content = message.sender + ' joined!';
+        } else if (message.type === 'LEAVE') {
+            messageElement.classList.add('event-message');
+            message.content = message.sender + ' left!';
+        } else {
+            messageElement.classList.add('chat-message');
+
+            var avatarElement = document.createElement('i');
+            var avatarText = document.createTextNode(message.sender[0]);
+            avatarElement.appendChild(avatarText);
+            avatarElement.style['background-color'] = getAvatarColor(message.sender);
+
+            messageElement.appendChild(avatarElement);
+
+            var usernameElement = document.createElement('span');
+            var usernameText = document.createTextNode(message.sender);
+            usernameElement.appendChild(usernameText);
+            messageElement.appendChild(usernameElement);
+        }
+
+        var textElement = document.createElement('p');
+        var messageText = document.createTextNode(message.content);
+        textElement.appendChild(messageText);
+
+        messageElement.appendChild(textElement);
+
+        messageArea.appendChild(messageElement);
+        messageArea.scrollTop = messageArea.scrollHeight;
+    }
+
+</script>
+<div id="chat-page">
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Spring WebSocket Chat Demo</h2>
+        </div>
+        <div class="connecting">
+            연결중...
+        </div>
+        <ul id="messageArea">
+
+        </ul>
+        <form id="messageForm" name="messageForm">
+            <div class="form-group">
+                <div class="input-group clearfix">
+                    <input type="text" id="message" placeholder="Type a message..." autocomplete="off" class="form-control"/>
+                    <button type="submit" class="primary">보내기</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/main.js"></script>
+</html>

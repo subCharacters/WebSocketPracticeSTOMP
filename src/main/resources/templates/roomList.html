@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Boot WebSocket Chat Application</title>
+    <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+<div id="username-page">
+    <div class="username-page-container">
+        <h1 class="title">Channel을 선택하세요</h1>
+        <ul>
+            <li th:each="room : ${rooms}">
+                <a th:href="@{'/chat/' + ${room.id}}"><span th:text="${room.name}"></span></a>
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/main.js"></script>
+</html>
